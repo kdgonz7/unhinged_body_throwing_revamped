@@ -1,97 +1,79 @@
-local BodyDragKeyConVar = CreateConVar("bg_body_drag_key", KEY_E, { FCVAR_USERINFO, FCVAR_ARCHIVE })
-local BodyThrowKeyConVar = CreateConVar("bg_body_drag_throw", MOUSE_RIGHT, { FCVAR_USERINFO, FCVAR_ARCHIVE })
-local BodyThrowGrenadeKeyConVar = CreateConVar("bg_body_throw_grenade", MOUSE_MIDDLE, { FCVAR_USERINFO, FCVAR_ARCHIVE })
+-- Body Drag Client v1.0.0
+local BodyDragKeyConVar = CreateConVar("bg_body_drag_key", "38", { FCVAR_USERINFO, FCVAR_ARCHIVE })                 -- KEY_E = 38
+local BodyThrowKeyConVar = CreateConVar("bg_body_throw_key", "2", { FCVAR_USERINFO, FCVAR_ARCHIVE })                -- MOUSE_RIGHT = 2
+local BodyThrowGrenadeKeyConVar = CreateConVar("bg_body_throw_grenade_key", "4", { FCVAR_USERINFO, FCVAR_ARCHIVE }) -- MOUSE_MIDDLE = 4
 
-local isDragging = false
-local isThrowing = false
-local isThrowingGrenade = false
+-- Track key states to prevent duplicate messages
+local keyState = {
+	drag = false,
+	throw = false,
+	throwGrenade = false
+}
 
--- Helper function to check if a specific key is currently pressed
+-- Helper function to check if a key is pressed
 local function IsKeyPressed(key)
 	return input.IsKeyDown(key) or input.IsMouseDown(key)
 end
 
-concommand.Add("+startdrag", function(ply, cmd, args)
-	if not ply:IsValid() then return end
-	isDragging = true
-end)
-
-concommand.Add("-startdrag", function(ply, cmd, args)
-	if not ply:IsValid() then return end
-	if isDragging then
-		net.Start("BD_Drop")
-		net.SendToServer()
-		isDragging = false
-	end
-end)
-
-concommand.Add("+throwbody", function(ply, cmd, args)
-	if not ply:IsValid() then return end
-	isThrowing = true
-end)
-
-concommand.Add("-throwbody", function(ply, cmd, args)
-	if not ply:IsValid() then return end
-	if isThrowing then
-		net.Start("BD_Throw")
-		net.SendToServer()
-		isThrowing = false
-	end
-end)
-
-concommand.Add("+throwbodywithgrenade", function(ply, cmd, args)
-	if not ply:IsValid() then return end
-	isThrowingGrenade = true
-end)
-
-concommand.Add("-throwbodywithgrenade", function(ply, cmd, args)
-	if not ply:IsValid() then return end
-	if isThrowingGrenade then
-		net.Start("BD_ThrowWithGrenade")
-		net.SendToServer()
-		isThrowingGrenade = false
-	end
-end)
-
-hook.Add("Think", "BodyDragCommandCheck", function()
+-- Think hook for key handling
+hook.Add("Think", "BodyDragKeyHandler", function()
 	local ply = LocalPlayer()
-	if not ply:IsValid() then return end
+	if not IsValid(ply) then return end
+	if not IsValid(ply:GetNWEntity("dragging", nil)) then
+		keyState.drag = false
+	end
 
 	local dragKey = BodyDragKeyConVar:GetInt()
 	local throwKey = BodyThrowKeyConVar:GetInt()
 	local throwGrenadeKey = BodyThrowGrenadeKeyConVar:GetInt()
 
-	-- Start Drag
-	if IsKeyPressed(dragKey) and not isDragging then
+	local dragPressed = IsKeyPressed(dragKey)
+	local throwPressed = IsKeyPressed(throwKey)
+	local throwGrenadePressed = IsKeyPressed(throwGrenadeKey)
+
+	if dragPressed and not keyState.drag then
+		keyState.drag = true
 		net.Start("BD_Start")
 		net.SendToServer()
-		isDragging = true
-	end
-
-	-- Drop Body if drag key is released and we were dragging
-	if not IsKeyPressed(dragKey) and isDragging then
+	elseif not dragPressed and keyState.drag then
+		keyState.drag = false
 		net.Start("BD_Drop")
 		net.SendToServer()
-		isDragging = false
 	end
 
-	-- Throw Body
-	if IsKeyPressed(throwKey) and not isThrowing and not isDragging then -- Only throw if not currently dragging
-		net.Start("BD_Throw")
-		net.SendToServer()
-		isThrowing = true
-	end
-	if not IsKeyPressed(throwKey) and isThrowing then
-		isThrowing = false
+	if throwPressed and not keyState.throw then
+		keyState.throw = true
+		if keyState.drag then
+			net.Start("BD_Throw")
+			net.SendToServer()
+		end
+	elseif not throwPressed and keyState.throw then
+		keyState.throw = false
 	end
 
-	-- Throw Body with Grenade
-	if IsKeyPressed(throwGrenadeKey) and not isThrowingGrenade and not isDragging then -- Only throw if not currently dragging
-		net.Start("BD_ThrowWithGrenade")
-		net.SendToServer()
-		isThrowingGrenade = true
-	end
-	if not IsKeyPressed(throwGrenadeKey) and isThrowingGrenade then
-		isThrowingGrenade = false
+	-- Handle Throw with Grenade
+	if throwGrenadePressed and not keyState.throwGrenade then
+		keyState.throwGrenade = true
+		if keyState.drag then
+			net.Start("BD_ThrowWithGrenade")
+			net.SendToServer()
+		end
+	elseif not throwGrenadePressed and keyState.throwGrenade then
+		keyState.throwGrenade = false
 	end
 end)
+
+hook.Add("HUDPaint", "BodyDragHUD", function()
+	local ply = LocalPlayer()
+	if not IsValid(ply) then return end
+
+	local dragging = ply:GetNWEntity("dragging", nil)
+	if IsValid(dragging) then
+		-- Draw a simple indicator
+		draw.SimpleText("Dragging: " .. (dragging:GetClass() or "Ragdoll"),
+			"TargetID", ScrW() / 2, ScrH() - 100,
+			Color(255, 255, 255), TEXT_ALIGN_CENTER)
+	end
+end)
+
+print("[Body Drag Client] Loaded v1.0.0")
