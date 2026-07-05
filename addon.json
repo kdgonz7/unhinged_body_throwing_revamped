@@ -1,0 +1,19 @@
+{
+  "title": "Unhinged Body Throwing",
+  "type": "entity",
+  "tags": [
+    "fun",
+    "roleplay",
+    "comic"
+  ],
+  "ignore": [
+    "extracted/*",
+    "*.pu",
+    "*.py",
+    "*.md",
+    "*.sh",
+    "docs/",
+    "docs/*",
+    "mdb*"
+  ]
+}
