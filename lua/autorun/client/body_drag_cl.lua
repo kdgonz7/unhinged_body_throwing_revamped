@@ -22,7 +22,24 @@ hook.Add("PopulateToolMenu", "catty", function()
 			cb:AddChoice("Hell", "hell")
 			cb:AddChoice("Normal", "normal")
 			cb:AddChoice("Sneaky Beaky Like", "sneaky-beaky-like")
+
+			panel:NumSlider(
+				"Throw Force Multiplier",
+				"bg_throw_force",
+				0.1,
+				1000.0,
+				2
+			)
+			panel:NumSlider(
+				"Max Drag Distance",
+				"bg_max_drag_distance",
+				50,
+				500,
+				0
+			)
 		end
+
+
 
 		panel:KeyBinder("Body Drag Key", "bg_body_drag_key")
 		panel:ControlHelp("What do you want to use to grab bodies? Default = E")
