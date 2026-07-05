@@ -63,17 +63,4 @@ hook.Add("Think", "BodyDragKeyHandler", function()
 	end
 end)
 
-hook.Add("HUDPaint", "BodyDragHUD", function()
-	local ply = LocalPlayer()
-	if not IsValid(ply) then return end
-
-	local dragging = ply:GetNWEntity("dragging", nil)
-	if IsValid(dragging) then
-		-- Draw a simple indicator
-		draw.SimpleText("Dragging: " .. (dragging:GetClass() or "Ragdoll"),
-			"TargetID", ScrW() / 2, ScrH() - 100,
-			Color(255, 255, 255), TEXT_ALIGN_CENTER)
-	end
-end)
-
 print("[Body Drag Client] Loaded v1.0.0")

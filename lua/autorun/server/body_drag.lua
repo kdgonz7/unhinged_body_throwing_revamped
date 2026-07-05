@@ -1,3 +1,4 @@
+---@diagnostic disable: param-type-mismatch
 -- Body Drag Improved --- the REAL SHIT
 util.AddNetworkString("BD_Start")
 util.AddNetworkString("BD_Throw")
@@ -37,7 +38,7 @@ local function GetThrowForce()
 	if preset == "hell" then
 		return 1000000 * multiplier
 	elseif preset == "normal" then
-		return 1072 * multiplier
+		return 10000 * multiplier
 	elseif preset == "sneaky-beaky-like" then
 		return 32768 * multiplier
 	else
